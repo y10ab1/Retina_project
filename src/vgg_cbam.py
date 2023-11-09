@@ -1,31 +1,3 @@
-import pandas as pd 
-import numpy as np 
-from torch.utils.data import Dataset
-import glob 
-from dataset import Retina_Dataset
-from torchvision import transforms
-from torch.utils.data import DataLoader
-import torch.optim as optim
-from torchvision import models
-import torch.nn as nn
-import torch
-from torchmetrics.classification import BinaryAccuracy
-from torcheval.metrics.classification import BinaryRecall
-from torcheval.metrics.classification import BinaryPrecision
-from torcheval.metrics.classification import BinaryAUPRC
-from torcheval.metrics.classification import BinaryAUROC
-from torcheval.metrics.functional import binary_auprc
-from torcheval.metrics.functional import binary_auroc
-from sklearn.metrics import precision_score, recall_score
-import sys 
-from model import MY_VGG16
-import datetime
-
-
-
-
-
-
 # header files needed
 import numpy as np
 import torch
@@ -71,7 +43,7 @@ class SpatialAttention(nn.Module):
 
 
 # model class
-class EFF_CBAM(torch.nn.Module):
+class VGG16_CBAM(torch.nn.Module):
 
   # init function
   def __init__(self, model, num_classes=1):
@@ -80,25 +52,28 @@ class EFF_CBAM(torch.nn.Module):
     self.ca = ChannelAttention(64)
     self.sa = SpatialAttention()
     # features
-    self.features_0 = model.features[0]
-    self.features_1 = model.features[1]
-    self.features_2 = model.features[2]
-    self.features_3 = model.features[3]
-    self.features_4 = model.features[4]
-    self.features_5 = model.features[5]
-    self.features_6 = model.features[6]
-    self.features_7 = model.features[7]
-    self.features_8 = model.features[8]
-    
+    self.features_1 = torch.nn.Sequential(*list(model.features.children())[:3])
+    self.features_2 = torch.nn.Sequential(*list(model.features.children())[3:6])
+    self.features_3 = torch.nn.Sequential(*list(model.features.children())[6:10])
+    self.features_4 = torch.nn.Sequential(*list(model.features.children())[10:13])
+    self.features_5 = torch.nn.Sequential(*list(model.features.children())[13:17])
+    self.features_6 = torch.nn.Sequential(*list(model.features.children())[17:20])
+    self.features_7 = torch.nn.Sequential(*list(model.features.children())[20:23])
+    self.features_8 = torch.nn.Sequential(*list(model.features.children())[23:27])
+    self.features_9 = torch.nn.Sequential(*list(model.features.children())[27:30])
+    self.features_10 = torch.nn.Sequential(*list(model.features.children())[30:33])
+    self.features_11 = torch.nn.Sequential(*list(model.features.children())[33:37])
+    self.features_12 = torch.nn.Sequential(*list(model.features.children())[37:40])
+    self.features_13 = torch.nn.Sequential(*list(model.features.children())[40:43])
 
-    self.avgpool = model.avgpool
+    self.avgpool = nn.AdaptiveAvgPool2d(7)
 
+    # classifier
     self.classifier = torch.nn.Sequential(
-        nn.Dropout(p=0.4),
-        nn.Linear(2048,1),
+        nn.Dropout(p=0.5),
+        nn.Linear(25088,1),
         nn.Sigmoid()
     )
-
 
 
   # forward
@@ -115,6 +90,8 @@ class EFF_CBAM(torch.nn.Module):
     x = self.features_6(x)
     x = self.features_7(x)
     x = self.features_8(x)
+    x = self.features_9(x)
+    x = self.features_10(x)
 
     x = self.avgpool(x)
     x = x.view(x.shape[0], -1)
