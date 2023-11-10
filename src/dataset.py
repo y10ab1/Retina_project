@@ -1,30 +1,36 @@
-import pandas as pd 
 import numpy as np 
-from torch.utils.data import Dataset
-import glob 
-from PIL import Image
-from torchvision import transforms
-from sklearn.model_selection import train_test_split
+import pandas as pd 
 import torch
-
+import torchvision
+import glob 
+from torch.utils.data import Dataset
+from PIL import Image
+from torchvision.transforms import v2 as transforms
+# from torchvision import transforms
+from sklearn.model_selection import train_test_split
 
 
 class Retina_Dataset(Dataset):
-    def __init__(self,data_type):
+    def __init__(self,data_type, filepath=None, anno_file=None):
         self.data_type = data_type
         self.transform = transforms.Compose([
-            transforms.Resize((224,224)),
+            transforms.Resize((224)),
+            transforms.CenterCrop((224,224)),
+            transforms.RandomHorizontalFlip(p=0.3),
+            transforms.RandomRotation(degrees=15),
+            transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5), 
             transforms.ToTensor(),
+            
             ])
         if self.data_type == 'train':
-            self.file_list = glob.glob("../dataset/Training_Set/Training_Set/Training/*.png")
-            self.anno_file = '../dataset/Training_Set/Training_Set/RFMiD_Training_Labels.csv'
+            self.file_list = glob.glob("../dataset/Training_Set/Training_Set/Training/*.png") if filepath is None else filepath
+            self.anno_file = '../dataset/Training_Set/Training_Set/RFMiD_Training_Labels.csv' if anno_file is None else anno_file
         elif self.data_type == 'val':
-            self.file_list = glob.glob("../dataset/Evaluation_Set/Evaluation_Set/Validation/*.png")
-            self.anno_file = '../dataset/Evaluation_Set/Evaluation_Set/RFMiD_Validation_Labels.csv'
+            self.file_list = glob.glob("../dataset/Evaluation_Set/Evaluation_Set/Validation/*.png") if filepath is None else filepath
+            self.anno_file = '../dataset/Evaluation_Set/Evaluation_Set/RFMiD_Validation_Labels.csv' if anno_file is None else anno_file
         else:
-            self.file_list = glob.glob("../dataset/Test_Set/Test_Set/Test/*.png")
-            self.anno_file = '../dataset/Test_Set/Test_Set/RFMiD_Testing_Labels.csv'
+            self.file_list = glob.glob("../dataset/Test_Set/Test_Set/Test/*.png") if filepath is None else filepath
+            self.anno_file = '../dataset/Test_Set/Test_Set/RFMiD_Testing_Labels.csv' if anno_file is None else anno_file
             
         self.label_list = []
         dn = 0
@@ -43,7 +49,6 @@ class Retina_Dataset(Dataset):
         
         
         
-        
     def __len__(self):
         return len(self.file_list)
     
@@ -54,6 +59,20 @@ class Retina_Dataset(Dataset):
         return image, label
     
     
-    
-    
+if __name__ == "__main__":
+    train_dataset = Retina_Dataset('train')
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=1, shuffle=True)
+    max_h, max_w = 0, 0
+    for i, (image, label) in enumerate(train_loader):
+        print(image.shape)
+        print(label)
+        # save image
+        image = image.squeeze(0)
+        image = transforms.ToPILImage()(image)
+        image.save('test.png')
+        break
+    #     max_h = max(max_h, image.shape[2])
+    #     max_w = max(max_w, image.shape[3])
+        
+    # print(max_h, max_w)
     
