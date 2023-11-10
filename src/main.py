@@ -10,8 +10,8 @@ import argparse
 
 from dataset import Retina_Dataset
 from torchvision import transforms
-from torch.utils.data import DataLoader
 from torchvision import models
+from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 from torchmetrics.classification import BinaryAccuracy
 from torcheval.metrics.classification import BinaryRecall
@@ -22,7 +22,6 @@ from torcheval.metrics.functional import binary_auprc
 from torcheval.metrics.functional import binary_auroc
 from sklearn.metrics import precision_score, recall_score
 from model import MY_VGG16
-from tqdm import tqdm
 
 
 torch.manual_seed(8868)
@@ -56,6 +55,7 @@ def main(args):
 
 
     for epoch in range(args.n_epochs):
+        print(f"Epoch {epoch+1} of {args.n_epochs}")
         running_loss = 0.0
         model.train()
         for i, data in enumerate(train_loader, 0):
@@ -74,7 +74,7 @@ def main(args):
             
                 
             
-                
+        pritn()
         # validation
         model.eval()
         with torch.no_grad():
@@ -112,29 +112,19 @@ def main(args):
                 if target_list[z] == 0 and pred_list[z] == 0:
                     TN += 1
             SP = (TN) / (TN+FP)
-                
-            print('Epoch {}:'.format(epoch)) 
-            print(target)
-            print(pred)
-            print(logits)
+            
+            # print(target)
+            # print(pred)
+            # print(logits)
             metric = BinaryAccuracy()
-            print('Accuracy:')
-            ba = metric(pred, target).item()
-            print(ba)
-            print('Specificity')
-            print(SP)
-            print('Recall')
-            rc = recall_score(target.tolist(), pred.tolist())
-            print(rc)
-            print('Precision')
-            pc = precision_score(target.tolist(), pred.tolist())
-            print(pc)
-            print('AUPRC')
-            auprc = binary_auprc(logits, target).item()
-            print(auprc)
-            print('AUROC')
-            auroc = binary_auroc(logits, target).item()
-            print(auroc)
+            print('Accuracy:', metric(pred, target).item())
+            print('Specificity', SP)
+            print('Recall', recall_score(target.tolist(), pred.tolist()))
+            print('Precision', precision_score(target.tolist(), pred.tolist()))
+            print('AUPRC', binary_auprc(logits, target).item())
+            print('AUROC', binary_auroc(logits, target).item())
+            
+            print('-----------------------------------------------')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
