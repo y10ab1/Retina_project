@@ -1,5 +1,3 @@
-# FILEPATH: /home/yuehpo/coding/Retina_project/.gitignore
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
