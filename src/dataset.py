@@ -13,7 +13,7 @@ from sklearn.model_selection import train_test_split
 class Retina_Dataset(Dataset):
     def __init__(self,data_type, filepath=None, anno_file=None):
         self.data_type = data_type
-        self.transform = transforms.Compose([
+        self.transform_train = transforms.Compose([
             transforms.Resize((224)),
             transforms.CenterCrop((224,224)),
             transforms.RandomHorizontalFlip(p=0.3),
@@ -23,6 +23,14 @@ class Retina_Dataset(Dataset):
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), # mean and std for ImageNet
 
             ])
+        self.transform_val = transforms.Compose([
+            transforms.Resize((224)),
+            transforms.CenterCrop((224,224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229,0.224,0.225]), # mean and std for ImageNet
+            ])
+            
+            
         if self.data_type == 'train':
             self.file_list = glob.glob("../dataset/Training_Set/Training_Set/Training/*.png") if filepath is None else filepath
             self.anno_file = '../dataset/Training_Set/Training_Set/RFMiD_Training_Labels.csv' if anno_file is None else anno_file
@@ -55,7 +63,7 @@ class Retina_Dataset(Dataset):
     
     def __getitem__(self, idx):
         img_pil = Image.open(self.file_list[idx])
-        image = self.transform(img_pil)
+        image = self.transform_train(img_pil) if self.data_type == 'train' else self.transform_val(img_pil)
         label = self.label_list[idx]
         return image, label
     

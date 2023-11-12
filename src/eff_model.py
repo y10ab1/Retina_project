@@ -1,22 +1,11 @@
-import pandas as pd 
 import numpy as np 
-from torch.utils.data import Dataset
 import glob 
-from dataset import Retina_Dataset
 from torchvision import transforms
 from torch.utils.data import DataLoader
 import torch.optim as optim
 from torchvision import models
 import torch.nn as nn
 import torch
-from torchmetrics.classification import BinaryAccuracy
-from torcheval.metrics.classification import BinaryRecall
-from torcheval.metrics.classification import BinaryPrecision
-from torcheval.metrics.classification import BinaryAUPRC
-from torcheval.metrics.classification import BinaryAUROC
-from torcheval.metrics.functional import binary_auprc
-from torcheval.metrics.functional import binary_auroc
-from sklearn.metrics import precision_score, recall_score
 import sys 
 from model import MY_VGG16
 import datetime
@@ -77,7 +66,7 @@ class EFF_CBAM(torch.nn.Module):
   def __init__(self, model, num_classes=1):
     super().__init__()
     
-    self.ca = ChannelAttention(64)
+    self.ca = ChannelAttention(32)
     self.sa = SpatialAttention()
     # features
     self.features_0 = model.features[0]
@@ -95,7 +84,7 @@ class EFF_CBAM(torch.nn.Module):
 
     self.classifier = torch.nn.Sequential(
         nn.Dropout(p=0.4),
-        nn.Linear(2048,1),
+        nn.Linear(2560,1),
         nn.Sigmoid()
     )
 
@@ -104,6 +93,7 @@ class EFF_CBAM(torch.nn.Module):
   # forward
   def forward(self, x):
     
+    x = self.features_0(x)
     x = self.features_1(x)
     x = self.ca(x) * x
     x = self.sa(x) * x    
