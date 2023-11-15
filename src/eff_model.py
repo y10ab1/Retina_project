@@ -63,11 +63,13 @@ class SpatialAttention(nn.Module):
 class EFF_CBAM(torch.nn.Module):
 
   # init function
-  def __init__(self, model, num_classes=1):
+  def __init__(self, model, num_classes=1, spatial_attention=True, channel_attention=True):
     super().__init__()
     
     self.ca = ChannelAttention(32)
     self.sa = SpatialAttention()
+    self.spatial_attention = spatial_attention
+    self.channel_attention = channel_attention
     # features
     self.features_0 = model.features[0]
     self.features_1 = model.features[1]
@@ -95,8 +97,8 @@ class EFF_CBAM(torch.nn.Module):
     
     x = self.features_0(x)
     x = self.features_1(x)
-    x = self.ca(x) * x
-    x = self.sa(x) * x    
+    x = self.ca(x) * x if self.channel_attention else x
+    x = self.sa(x) * x if self.spatial_attention else x
 
     x = self.features_2(x)
     x = self.features_3(x)

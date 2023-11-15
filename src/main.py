@@ -43,7 +43,7 @@ def main(args):
     # model = VGG16_CBAM(vgg_model)
     
     original_model = models.efficientnet_b7(pretrained=True)
-    model = EFF_CBAM(original_model) if args.apply_cbam else original_model
+    model = EFF_CBAM(original_model, spatial_attention=True, channel_attention=True) if args.apply_cbam else EFF_CBAM(original_model, spatial_attention=False, channel_attention=False)
 
     model.to(args.device)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
@@ -77,7 +77,7 @@ def main(args):
             train_loss += loss.item()
             
         train_loss = train_loss / len(train_loader)
-        writer.add_scalar('train_loss', train_loss, epoch)
+        writer.add_scalar('Loss/train', train_loss, epoch)
             
                 
             
@@ -133,12 +133,13 @@ def main(args):
             
             print('-----------------------------------------------')
             
-            writer.add_scalar('val_loss', val_loss, epoch)
-            writer.add_scalar('val_accuracy', metric(pred, target).item(), epoch)
-            writer.add_scalar('val_specificity', SP, epoch)
-            writer.add_scalar('val_recall', recall_score(target.tolist(), pred.tolist()), epoch)
-            writer.add_scalar('val_precision', precision_score(target.tolist(), pred.tolist()), epoch)
-            writer.add_scalar('val_auprc', binary_auprc(logits, target).item(), epoch)
+            writer.add_scalar('Loss/validation', val_loss, epoch)
+            writer.add_scalar('Val/Accuracy', metric(pred, target).item(), epoch)
+            writer.add_scalar('Val/Specificity', SP, epoch)
+            writer.add_scalar('Val/Recall', recall_score(target.tolist(), pred.tolist()), epoch)
+            writer.add_scalar('Val/Precision', precision_score(target.tolist(), pred.tolist()), epoch)
+            writer.add_scalar('Val/AUPRC', binary_auprc(logits, target).item(), epoch)
+            writer.add_scalar('Val/AUROC', binary_auroc(logits, target).item(), epoch)
             
 def test(args):
     model = torch.load('./checkpoint/best_model.pt')
@@ -194,18 +195,20 @@ def test(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=32)
-    parser.add_argument('--n_epochs', type=int, default=50)
+    parser.add_argument('--n_epochs', type=int, default=20)
     parser.add_argument('--lr', type=float, default=0.0001)
     parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
-    parser.add_argument('--apply_cbam', type=bool, default=True)
-    parser.add_argument('--select_green', type=bool, default=False)
-    parser.add_argument('--clahe', type=bool, default=True)
+    parser.add_argument('--apply_cbam', action='store_true')
+    parser.add_argument('--select_green', action='store_true')
+    parser.add_argument('--clahe', action='store_true')
     parser.add_argument('--log_dir', type=str, default=f'./logs/{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}')
     args = parser.parse_args()
 
     os.makedirs(args.log_dir, exist_ok=True)
     writer = SummaryWriter(args.log_dir)
-    writer.add_text('args', str(args))
+    writer.add_text('Experiment setting', '\n'.join([f'{k}: {v}' for k, v in vars(args).items()]))
     
     main(args)
     test(args)
+    
+    writer.close()
