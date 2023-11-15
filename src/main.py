@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch
 import datetime
 import argparse
+import os
 
 from dataset import Retina_Dataset
 from torchvision import transforms
@@ -28,7 +29,7 @@ from eff_model import EFF_CBAM
 
 torch.manual_seed(8868)
 
-        
+from torch.utils.tensorboard import SummaryWriter
         
 
 def main(args):
@@ -38,30 +39,28 @@ def main(args):
         
         
     # vgg_model = models.vgg16(pretrained=True)
-    eff_model = models.efficientnet_b7(pretrained=True)
     # model = MY_VGG16(vgg_model)
     # model = VGG16_CBAM(vgg_model)
-    model = EFF_CBAM(eff_model)
+    
+    original_model = models.efficientnet_b7(pretrained=True)
+    model = EFF_CBAM(original_model) if args.apply_cbam else original_model
 
-    print(model)
     model.to(args.device)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5, verbose=True)
 
 
-    train_data = Retina_Dataset('train')
-    print(train_data[0])
-    val_data = Retina_Dataset('val')
+    train_data = Retina_Dataset('train', select_green=args.select_green, clahe=args.clahe)
+    val_data = Retina_Dataset('val', select_green=args.select_green, clahe=args.clahe)
     train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=False)
     sample = next(iter(train_loader))
     imgs, lbls = sample
-    print(lbls)
 
 
     for epoch in range(args.n_epochs):
         print(f"Epoch {epoch+1} of {args.n_epochs}")
-        running_loss = 0.0
+        train_loss = 0.0
         model.train()
         for i, data in enumerate(train_loader, 0):
             inputs, labels = data
@@ -75,7 +74,10 @@ def main(args):
             loss.backward()
             optimizer.step()
             print('Iteration {}: Loss: {:.4f}'.format(i,loss.item()))
-                
+            train_loss += loss.item()
+            
+        train_loss = train_loss / len(train_loader)
+        writer.add_scalar('train_loss', train_loss, epoch)
             
                 
             
@@ -108,7 +110,7 @@ def main(args):
             
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-                torch.save(model,'./checkpoint/best_vgg.pt')
+                torch.save(model,'./checkpoint/best_model.pt')
 
             target_list = target.tolist()
             pred_list = pred.tolist()
@@ -131,10 +133,17 @@ def main(args):
             
             print('-----------------------------------------------')
             
+            writer.add_scalar('val_loss', val_loss, epoch)
+            writer.add_scalar('val_accuracy', metric(pred, target).item(), epoch)
+            writer.add_scalar('val_specificity', SP, epoch)
+            writer.add_scalar('val_recall', recall_score(target.tolist(), pred.tolist()), epoch)
+            writer.add_scalar('val_precision', precision_score(target.tolist(), pred.tolist()), epoch)
+            writer.add_scalar('val_auprc', binary_auprc(logits, target).item(), epoch)
+            
 def test(args):
-    model = torch.load('./checkpoint/best_vgg.pt')
+    model = torch.load('./checkpoint/best_model.pt')
     model.to(args.device)
-    test_data = Retina_Dataset('test')
+    test_data = Retina_Dataset('test', select_green=args.select_green, clahe=args.clahe)
     test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=False)
     with torch.no_grad():
         target = torch.tensor([])
@@ -173,13 +182,30 @@ def test(args):
         print('AUROC', binary_auroc(logits, target).item())
         
         print('-----------------------------------------------')
+        
+        writer.add_text('test', 'Accuracy: {}'.format(metric(pred, target).item()))
+        writer.add_text('test', 'Specificity: {}'.format(SP))
+        writer.add_text('test', 'Recall: {}'.format(recall_score(target.tolist(), pred.tolist())))
+        writer.add_text('test', 'Precision: {}'.format(precision_score(target.tolist(), pred.tolist())))
+        writer.add_text('test', 'AUPRC: {}'.format(binary_auprc(logits, target).item()))
+        writer.add_text('test', 'AUROC: {}'.format(binary_auroc(logits, target).item()))
+        
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--n_epochs', type=int, default=50)
     parser.add_argument('--lr', type=float, default=0.0001)
     parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
+    parser.add_argument('--apply_cbam', type=bool, default=True)
+    parser.add_argument('--select_green', type=bool, default=False)
+    parser.add_argument('--clahe', type=bool, default=True)
+    parser.add_argument('--log_dir', type=str, default=f'./logs/{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}')
     args = parser.parse_args()
-    # main(args)
+
+    os.makedirs(args.log_dir, exist_ok=True)
+    writer = SummaryWriter(args.log_dir)
+    writer.add_text('args', str(args))
+    
+    main(args)
     test(args)

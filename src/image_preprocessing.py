@@ -18,6 +18,6 @@ g = clahe.apply(g)
 r = clahe.apply(r)
 image = cv2.merge([b,g,r])
 
-cv2.imwrite('CLAHE.png',image)
+cv2.imwrite('green_CLAHE.png',image)
 cv2.imwrite('green.png',green_image)
 
