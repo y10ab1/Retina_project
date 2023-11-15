@@ -3,24 +3,31 @@ import pandas as pd
 import torch
 import torchvision
 import glob 
+import cv2
 from torch.utils.data import Dataset
 from PIL import Image
 from torchvision.transforms import v2 as transforms
+from torchvision.transforms.functional import equalize as equalize_fn
 # from torchvision import transforms
 from sklearn.model_selection import train_test_split
 
 
 class Retina_Dataset(Dataset):
-    def __init__(self,data_type, filepath=None, anno_file=None):
+    def __init__(self,data_type, filepath=None, anno_file=None, select_green=False, equalize=False, clahe=False):
         self.data_type = data_type
+        self.select_green = select_green
+        self.clahe = clahe
+        self.equalize = equalize
         self.transform_train = transforms.Compose([
             transforms.Resize((224)),
             transforms.CenterCrop((224,224)),
             transforms.RandomHorizontalFlip(p=0.3),
             transforms.RandomRotation(degrees=15),
-            transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5), 
+            
+            # transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5), 
+            # equalize_fn,
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), # mean and std for ImageNet
+            # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), # mean and std for ImageNet
 
             ])
         self.transform_val = transforms.Compose([
@@ -63,13 +70,28 @@ class Retina_Dataset(Dataset):
     
     def __getitem__(self, idx):
         img_pil = Image.open(self.file_list[idx])
+        
         image = self.transform_train(img_pil) if self.data_type == 'train' else self.transform_val(img_pil)
         label = self.label_list[idx]
+        
+        if self.select_green:
+            image[0,:,:] = 0
+            image[2,:,:] = 0
+        
+
+        
         return image, label
+    
+    def _clahe(self, img):
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        img = img.numpy().transpose(1,2,0)
+        img = clahe.apply(img)
+        img = torch.from_numpy(img).transpose(0,2)
+        return img
     
     
 if __name__ == "__main__":
-    train_dataset = Retina_Dataset('train')
+    train_dataset = Retina_Dataset('train', select_green=True, equalize=True)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=1, shuffle=True)
     max_h, max_w = 0, 0
     for i, (image, label) in enumerate(train_loader):

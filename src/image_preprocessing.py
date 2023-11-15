@@ -1,9 +1,4 @@
 import cv2
-
-
-
-
-import cv2
 green_image = cv2.imread('../dataset/Training_Set/Training_Set/Training/1.png')
 
 clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(8,8))
