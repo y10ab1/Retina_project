@@ -1,21 +1,3 @@
-import numpy as np 
-import glob 
-from torchvision import transforms
-from torch.utils.data import DataLoader
-import torch.optim as optim
-from torchvision import models
-import torch.nn as nn
-import torch
-import sys 
-from model import MY_VGG16
-import datetime
-
-
-
-
-
-
-# header files needed
 import numpy as np
 import torch
 import torch.nn as nn

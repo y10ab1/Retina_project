@@ -184,12 +184,12 @@ def test(args):
         
         print('-----------------------------------------------')
         
-        writer.add_text('test', 'Accuracy: {}'.format(metric(pred, target).item()))
-        writer.add_text('test', 'Specificity: {}'.format(SP))
-        writer.add_text('test', 'Recall: {}'.format(recall_score(target.tolist(), pred.tolist())))
-        writer.add_text('test', 'Precision: {}'.format(precision_score(target.tolist(), pred.tolist())))
-        writer.add_text('test', 'AUPRC: {}'.format(binary_auprc(logits, target).item()))
-        writer.add_text('test', 'AUROC: {}'.format(binary_auroc(logits, target).item()))
+        writer.add_text('test/Accuracy', 'Accuracy: {}'.format(metric(pred, target).item()))
+        writer.add_text('test/Specificity', 'Specificity: {}'.format(SP))
+        writer.add_text('test/Recall', 'Recall: {}'.format(recall_score(target.tolist(), pred.tolist())))
+        writer.add_text('test/Precision', 'Precision: {}'.format(precision_score(target.tolist(), pred.tolist())))
+        writer.add_text('test/AUPRC', 'AUPRC: {}'.format(binary_auprc(logits, target).item()))
+        writer.add_text('test/AUROC', 'AUROC: {}'.format(binary_auroc(logits, target).item()))
         
 
 if __name__ == "__main__":
