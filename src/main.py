@@ -184,12 +184,22 @@ def test(args):
         
         print('-----------------------------------------------')
         
-        writer.add_text('test/Accuracy', 'Accuracy: {}'.format(metric(pred, target).item()))
-        writer.add_text('test/Specificity', 'Specificity: {}'.format(SP))
-        writer.add_text('test/Recall', 'Recall: {}'.format(recall_score(target.tolist(), pred.tolist())))
-        writer.add_text('test/Precision', 'Precision: {}'.format(precision_score(target.tolist(), pred.tolist())))
-        writer.add_text('test/AUPRC', 'AUPRC: {}'.format(binary_auprc(logits, target).item()))
-        writer.add_text('test/AUROC', 'AUROC: {}'.format(binary_auroc(logits, target).item()))
+        # writer.add_text('test/Accuracy', 'Accuracy: {}'.format(metric(pred, target).item()))
+        # writer.add_text('test/Specificity', 'Specificity: {}'.format(SP))
+        # writer.add_text('test/Recall', 'Recall: {}'.format(recall_score(target.tolist(), pred.tolist())))
+        # writer.add_text('test/Precision', 'Precision: {}'.format(precision_score(target.tolist(), pred.tolist())))
+        # writer.add_text('test/AUPRC', 'AUPRC: {}'.format(binary_auprc(logits, target).item()))
+        # writer.add_text('test/AUROC', 'AUROC: {}'.format(binary_auroc(logits, target).item()))
+        
+        writer.add_hparams(
+            args.__dict__,
+            {'test/accuracy': metric(pred, target).item(),
+             'test/specificity': SP,
+             'test/recall': recall_score(target.tolist(), pred.tolist()),
+             'test/precision': precision_score(target.tolist(), pred.tolist()),
+             'test/auprc': binary_auprc(logits, target).item(),
+             'test/auroc': binary_auroc(logits, target).item(),
+            })
         
 
 if __name__ == "__main__":
@@ -206,8 +216,9 @@ if __name__ == "__main__":
 
     os.makedirs(args.log_dir, exist_ok=True)
     writer = SummaryWriter(args.log_dir)
-    writer.add_text('Experiment setting', '\n'.join([f'{k}: {v}' for k, v in vars(args).items()]))
-    
+    # writer.add_text('Experiment setting', '\n'.join([f'{k}: {v}' for k, v in vars(args).items()]))
+    print(args.__dict__)
+    exit()
     main(args)
     test(args)
     
