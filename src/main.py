@@ -43,7 +43,10 @@ def main(args):
     # model = VGG16_CBAM(vgg_model)
     
     original_model = models.efficientnet_b7(pretrained=True)
-    model = EFF_CBAM(original_model, spatial_attention=True, channel_attention=True) if args.apply_cbam else EFF_CBAM(original_model, spatial_attention=False, channel_attention=False)
+    if args.apply_cbam:
+        model = EFF_CBAM(original_model, spatial_attention=True, channel_attention=True)
+    else:
+        model = EFF_CBAM(original_model, spatial_attention=False, channel_attention=False)
 
     model.to(args.device)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
