@@ -21,6 +21,10 @@ Put it in `dataset` folder.
 ```bash
 python main.py
 ```
+or 
+```bash
+./train.sh # see train.sh for details
+```
 
 ### 5. Run tensorboard to see results
 ```bash
