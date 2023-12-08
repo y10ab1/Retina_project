@@ -67,8 +67,8 @@ def main(args):
             outputs = model(inputs)
             outputs = outputs.squeeze(-1).to(torch.float32)
             loss = criterion(outputs,labels)
-            mAUROC_loss = -MultilabelAUROC(num_labels = 1 if not args.multi_class else 6)(outputs, labels.to(torch.long))
-            loss = loss + mAUROC_loss
+            # mAUROC_loss = -MultilabelAUROC(num_labels = 1 if not args.multi_class else 6)(outputs, labels.to(torch.long))
+            # loss = loss + mAUROC_loss
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
@@ -99,8 +99,8 @@ def main(args):
                 logits = torch.cat((logits, outputs.cpu()))
                 target = torch.cat((target, labels.cpu())).to(torch.int64)
                 pred = torch.cat((pred, outputs_label.cpu()))
-                loss = criterion(outputs.to(torch.float32), labels.to(torch.float32))
-                mAUROC_loss = -MultilabelAUROC(num_labels = 1 if not args.multi_class else 6)(outputs, labels.to(torch.long))
+                # loss = criterion(outputs.to(torch.float32), labels.to(torch.float32))
+                # mAUROC_loss = -MultilabelAUROC(num_labels = 1 if not args.multi_class else 6)(outputs, labels.to(torch.long))
                 val_loss += (loss.item() + mAUROC_loss)
                 
                 bar.set_description(f"loss: {loss.item():.5f}")
