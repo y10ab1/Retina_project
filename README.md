@@ -19,6 +19,7 @@ Put it in `dataset` folder.
 
 ### 4. Run training
 ```bash
+cd src
 python main.py
 ```
 or 
