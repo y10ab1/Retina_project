@@ -17,7 +17,7 @@ import cv2
 from crop import RetinalCrop
 
 class Retina_Dataset(Dataset):
-    def __init__(self,data_type, filepath=None, anno_file=None, select_green=False, clahe=False, multi_class=False):
+    def __init__(self,data_type, filepath=None, anno_file=None, select_green=False, clahe=False, multi_class=False, img_size=600):
         self.data_type = data_type
         self.select_green = select_green
         self.clahe = clahe
@@ -26,7 +26,7 @@ class Retina_Dataset(Dataset):
             transforms.ToTensor(),
             
             self.crop.transform,
-            transforms.Resize((224), antialias=True),
+            transforms.Resize((img_size), antialias=True),
             transforms.RandomHorizontalFlip(p=0.3),
             transforms.RandomRotation(degrees=15),
             transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5), 
@@ -37,7 +37,7 @@ class Retina_Dataset(Dataset):
             transforms.ToTensor(),
             
             self.crop.transform,
-            transforms.Resize((224), antialias=True),
+            transforms.Resize((img_size), antialias=True),
             # transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229,0.224,0.225]), # mean and std for ImageNet
             ])
