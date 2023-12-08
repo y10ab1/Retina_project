@@ -22,3 +22,8 @@ Put it in `dataset` folder.
 python main.py
 ```
 
+### 5. Run tensorboard to see results
+```bash
+tensorboard --logdir=src/logs
+```
+
