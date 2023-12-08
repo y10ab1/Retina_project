@@ -4,7 +4,7 @@
 
 ### 1. Prepare conda environment
 ```bash
-conda create -n retina python=3.10
+conda create -n retina python=3.9
 conda activate retina
 ```
 
