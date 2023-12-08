@@ -45,7 +45,7 @@ class SpatialAttention(nn.Module):
 class EFF_CBAM(torch.nn.Module):
 
   # init function
-  def __init__(self, model, num_classes=1, spatial_attention=True, channel_attention=True):
+  def __init__(self, model, spatial_attention=True, channel_attention=True, num_classes=1):
     super().__init__()
     
     self.ca = ChannelAttention(32)
@@ -68,7 +68,7 @@ class EFF_CBAM(torch.nn.Module):
 
     self.classifier = torch.nn.Sequential(
         nn.Dropout(p=0.4),
-        nn.Linear(2560,1),
+        nn.Linear(2560, num_classes),
         nn.Sigmoid()
     )
 
