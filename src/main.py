@@ -23,6 +23,8 @@ from torchmetrics.classification import MultilabelRecall
 from torchmetrics.classification import MultilabelAUROC
 from torchmetrics.classification import MultilabelAUROC
 
+from torchvision.ops import sigmoid_focal_loss
+
 from eff_model import EFF_CBAM
 from tqdm import tqdm
 torch.manual_seed(8868)
@@ -66,9 +68,10 @@ def main(args):
             optimizer.zero_grad()
             outputs = model(inputs)
             outputs = outputs.squeeze(-1).to(torch.float32)
-            loss = criterion(outputs,labels)
+            # loss = criterion(outputs,labels)
             # mAUROC_loss = -MultilabelAUROC(num_labels = 1 if not args.multi_class else 6)(outputs, labels.to(torch.long))
             # loss = loss + mAUROC_loss
+            loss = sigmoid_focal_loss(outputs, labels, alpha=args.alpha, gamma=args.gamma, reduction='mean')
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
@@ -99,8 +102,9 @@ def main(args):
                 logits = torch.cat((logits, outputs.cpu()))
                 target = torch.cat((target, labels.cpu())).to(torch.int64)
                 pred = torch.cat((pred, outputs_label.cpu()))
-                loss = criterion(outputs.to(torch.float32), labels.to(torch.float32))
+                # loss = criterion(outputs.to(torch.float32), labels.to(torch.float32))
                 # mAUROC_loss = -MultilabelAUROC(num_labels = 1 if not args.multi_class else 6)(outputs, labels.to(torch.long))
+                loss = sigmoid_focal_loss(outputs.to(torch.float32), labels.to(torch.float32), alpha=args.alpha, gamma=args.gamma, reduction='mean')
                 val_loss += loss.item()
                 
                 bar.set_description(f"loss: {loss.item():.5f}")
@@ -196,17 +200,21 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--n_epochs', type=int, default=20)
     parser.add_argument('--lr', type=float, default=0.0001)
-    parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
+    parser.add_argument('--alpha', type=float, default=0.25, help='Alpha parameter for focal loss')
+    parser.add_argument('--gamma', type=float, default=2.0, help='Gamma parameter for focal loss')
+    parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu', choices=['cuda', 'cpu', 'mps'])
     parser.add_argument('--apply_cbam', action='store_true')
     parser.add_argument('--select_green', action='store_true')
     parser.add_argument('--clahe', action='store_true')
     parser.add_argument('--multi_class', action='store_true')
     parser.add_argument('--log_dir', type=str, default=f'./logs/{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}')
     args = parser.parse_args()
+    
+    print(args.__dict__)
+    print(f'Using device: {args.device}')
 
     os.makedirs(args.log_dir, exist_ok=True)
     writer = SummaryWriter(args.log_dir)
-    print(args.__dict__)
     main(args)
     test(args)
     
