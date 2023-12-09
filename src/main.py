@@ -99,9 +99,9 @@ def main(args):
                 logits = torch.cat((logits, outputs.cpu()))
                 target = torch.cat((target, labels.cpu())).to(torch.int64)
                 pred = torch.cat((pred, outputs_label.cpu()))
-                # loss = criterion(outputs.to(torch.float32), labels.to(torch.float32))
+                loss = criterion(outputs.to(torch.float32), labels.to(torch.float32))
                 # mAUROC_loss = -MultilabelAUROC(num_labels = 1 if not args.multi_class else 6)(outputs, labels.to(torch.long))
-                val_loss += (loss.item() + mAUROC_loss)
+                val_loss += loss.item()
                 
                 bar.set_description(f"loss: {loss.item():.5f}")
                 
