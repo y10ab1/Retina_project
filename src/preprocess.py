@@ -4,17 +4,15 @@ import torch
 import torchvision
 import glob 
 import cv2
+import os
 from torch.utils.data import Dataset
 from PIL import Image
 from torchvision.transforms import v2 as transforms
-from torchvision.transforms.functional import equalize as equalize_fn
-# from torchvision import transforms
-from sklearn.model_selection import train_test_split
-import os
 from crop import RetinalCrop
+from tqdm import tqdm
 
 class Retina_Dataset(Dataset):
-    def __init__(self,data_type, filepath=None, anno_file=None, select_green=False, clahe=False, img_size=224):
+    def __init__(self,data_type, filepath=None, anno_file=None, select_green=False, clahe=True, img_size=224):
         self.data_type = data_type
         self.select_green = select_green
         self.clahe = clahe
@@ -74,19 +72,28 @@ class Retina_Dataset(Dataset):
         return image, label, filename
     
         
-    
+    def _clahe(self, img):
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        b,g,r = cv2.split(np.array(img))
+        b = clahe.apply(b)
+        g = clahe.apply(g)
+        r = clahe.apply(r)
+        image = cv2.merge([b,g,r])
+        return Image.fromarray(image)
     
 if __name__ == "__main__":
     
-    for split in ['train', 'val', 'test']:
+    # for split in ['train', 'val', 'test']:
+    for split in ['test']:
     
-        target_dataset = Retina_Dataset(split, img_size=224)
+        target_dataset = Retina_Dataset(split, img_size=600)
         train_loader = torch.utils.data.DataLoader(target_dataset, batch_size=1, shuffle=True)
         save_dir = f'../processed_dataset/{split}/'
         os.makedirs(save_dir, exist_ok=True)
-        for i, (image, label, filename) in enumerate(train_loader):
+        bar = tqdm(train_loader)
+        for i, (image, label, filename) in enumerate(bar):
             # save image
             image = image.squeeze(0)
             image = transforms.ToPILImage()(image)
             image.save(f"{save_dir}{filename[0]}")
-            break
+            # break

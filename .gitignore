@@ -24,3 +24,5 @@ eggs/
 # data and model
 *checkpoint
 dataset/
+*.png
+grad_cam/
